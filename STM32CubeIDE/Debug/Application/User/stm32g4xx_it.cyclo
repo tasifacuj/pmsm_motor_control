@@ -1,0 +1,16 @@
+../../Drivers/STM32G4xx_HAL_Driver/Inc/stm32g4xx_ll_tim.h:5455:22:LL_TIM_ClearFlag_UPDATE	1
+../../Drivers/STM32G4xx_HAL_Driver/Inc/stm32g4xx_ll_tim.h:5466:26:LL_TIM_IsActiveFlag_UPDATE	2
+C:/Users/t.shypytiak/work/projects/stm32/pmsm_motor_control/Src/stm32g4xx_it.c:73:6:NMI_Handler	1
+C:/Users/t.shypytiak/work/projects/stm32/pmsm_motor_control/Src/stm32g4xx_it.c:88:6:HardFault_Handler	1
+C:/Users/t.shypytiak/work/projects/stm32/pmsm_motor_control/Src/stm32g4xx_it.c:103:6:MemManage_Handler	1
+C:/Users/t.shypytiak/work/projects/stm32/pmsm_motor_control/Src/stm32g4xx_it.c:118:6:BusFault_Handler	1
+C:/Users/t.shypytiak/work/projects/stm32/pmsm_motor_control/Src/stm32g4xx_it.c:133:6:UsageFault_Handler	1
+C:/Users/t.shypytiak/work/projects/stm32/pmsm_motor_control/Src/stm32g4xx_it.c:148:6:SVC_Handler	1
+C:/Users/t.shypytiak/work/projects/stm32/pmsm_motor_control/Src/stm32g4xx_it.c:161:6:DebugMon_Handler	1
+C:/Users/t.shypytiak/work/projects/stm32/pmsm_motor_control/Src/stm32g4xx_it.c:174:6:PendSV_Handler	1
+C:/Users/t.shypytiak/work/projects/stm32/pmsm_motor_control/Src/stm32g4xx_it.c:187:6:SysTick_Handler	1
+C:/Users/t.shypytiak/work/projects/stm32/pmsm_motor_control/Src/stm32g4xx_it.c:208:6:EXTI9_5_IRQHandler	1
+C:/Users/t.shypytiak/work/projects/stm32/pmsm_motor_control/Src/stm32g4xx_it.c:226:6:TIM1_BRK_TIM15_IRQHandler	1
+C:/Users/t.shypytiak/work/projects/stm32/pmsm_motor_control/Src/stm32g4xx_it.c:240:6:TIM1_UP_TIM16_IRQHandler	1
+C:/Users/t.shypytiak/work/projects/stm32/pmsm_motor_control/Src/stm32g4xx_it.c:254:6:TIM3_IRQHandler	2
+C:/Users/t.shypytiak/work/projects/stm32/pmsm_motor_control/Src/stm32g4xx_it.c:273:6:TIM4_IRQHandler	2
