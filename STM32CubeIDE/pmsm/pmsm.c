@@ -14,17 +14,19 @@
 #include <string.h>
 #include <stdio.h>
 
-static const uint8_t PMSM_BRIDGE_STATE_FORWARD[8][6] =
+static const uint8_t BLDC_BRIDGE_STATE_FORWARD[8][6] =   // Motor steps
 {
 //	UH,UL		VH,VL	WH,WL
-   { 0,0,		0,0,	0,0 },  // 0 //000
-   { 0,1,		0,0,	1,0 },
-   { 1,0,		0,1,	0,0 },
-   { 0,0,		0,1,	1,0 },
-   { 0,0,		1,0,	0,1 },
-   { 0,1,		1,0,	0,0 },
-   { 1,0,		0,0,	0,1 },
-   { 0,0,		0,0,	0,0 },  // 0 //111
+   { 0,0	,	0,0	,	0,0 },  // 0 //000
+
+   { 0,1	,	0,0	,	1,0 },
+   { 1,0	,	0,1	,	0,0 },
+   { 0,0	,	0,1	,	1,0 },
+   { 0,0	,	1,0	,	0,1 },
+   { 0,1	,	1,0	,	0,0 },
+   { 1,0	,	0,0	,	0,1 },
+
+   { 0,0	,	0,0	,	0,0 },  // 0 //111
 };
 
 static const uint8_t PMSM_BRIDGE_STATE_BACKWARD[8][6] =
@@ -312,7 +314,7 @@ uint8_t pmsm_hall_sensors_get_position(){
 }
 
 void pmsm_motor_commutation( uint16_t hall_pos ){
-	memcpy( PMSM_State, PMSM_BRIDGE_STATE_BACKWARD[ hall_pos ], sizeof( PMSM_State ) );
+	memcpy( PMSM_State, BLDC_BRIDGE_STATE_FORWARD[ hall_pos ], sizeof( PMSM_State ) );
 
 	if (PMSM_State[UH]) {
 		LL_TIM_OC_SetMode(TIM1, LL_TIM_CHANNEL_CH1, LL_TIM_OCMODE_PWM1 );
