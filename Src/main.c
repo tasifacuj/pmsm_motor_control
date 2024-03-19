@@ -21,6 +21,7 @@
 #include "tim.h"
 #include "usart.h"
 #include "gpio.h"
+#include "pmsm/pmsm.h"
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
@@ -95,6 +96,7 @@ int main(void)
   /* USER CODE BEGIN 2 */
 
   pmsm_init();
+  PMSM_MotorSetSpin( PMSM_CCW );
   HAL_Delay( 3000 );
 
   pmsm_motor_commutation( pmsm_hall_sensors_get_position() );
@@ -108,7 +110,7 @@ int main(void)
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
-	  pmsm_set_PWM( 4000 );
+	  pmsm_set_PWM( 3000 );
   }
   /* USER CODE END 3 */
 }

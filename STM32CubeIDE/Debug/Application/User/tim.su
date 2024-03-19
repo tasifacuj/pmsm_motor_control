@@ -1,8 +1,8 @@
 ../../Drivers/STM32G4xx_HAL_Driver/Inc/stm32g4xx_ll_tim.h:2023:22:LL_TIM_EnableCounter	16	static
 ../../Drivers/STM32G4xx_HAL_Driver/Inc/stm32g4xx_ll_tim.h:4623:22:LL_TIM_EnableAllOutputs	16	static
 C:/Users/t.shypytiak/work/projects/stm32/pmsm_motor_control/Src/tim.c:32:6:MX_TIM1_Init	120	static
-C:/Users/t.shypytiak/work/projects/stm32/pmsm_motor_control/Src/tim.c:119:6:MX_TIM3_Init	40	static
-C:/Users/t.shypytiak/work/projects/stm32/pmsm_motor_control/Src/tim.c:159:6:MX_TIM4_Init	40	static
-C:/Users/t.shypytiak/work/projects/stm32/pmsm_motor_control/Src/tim.c:199:6:HAL_TIM_Base_MspInit	32	static
-C:/Users/t.shypytiak/work/projects/stm32/pmsm_motor_control/Src/tim.c:250:6:HAL_TIM_MspPostInit	40	static
-C:/Users/t.shypytiak/work/projects/stm32/pmsm_motor_control/Src/tim.c:284:6:HAL_TIM_Base_MspDeInit	16	static
+C:/Users/t.shypytiak/work/projects/stm32/pmsm_motor_control/Src/tim.c:120:6:MX_TIM3_Init	40	static
+C:/Users/t.shypytiak/work/projects/stm32/pmsm_motor_control/Src/tim.c:161:6:MX_TIM4_Init	40	static
+C:/Users/t.shypytiak/work/projects/stm32/pmsm_motor_control/Src/tim.c:201:6:HAL_TIM_Base_MspInit	32	static
+C:/Users/t.shypytiak/work/projects/stm32/pmsm_motor_control/Src/tim.c:252:6:HAL_TIM_MspPostInit	40	static
+C:/Users/t.shypytiak/work/projects/stm32/pmsm_motor_control/Src/tim.c:286:6:HAL_TIM_Base_MspDeInit	16	static

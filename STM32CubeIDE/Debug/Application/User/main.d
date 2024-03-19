@@ -30,6 +30,7 @@ Application/User/main.o: \
  ../../Drivers/STM32G4xx_HAL_Driver/Inc/stm32g4xx_hal_uart.h \
  ../../Drivers/STM32G4xx_HAL_Driver/Inc/stm32g4xx_hal_uart_ex.h \
  ../../Inc/tim.h ../../Inc/main.h ../../Inc/usart.h ../../Inc/gpio.h \
+ C:/Users/t.shypytiak/work/projects/stm32/pmsm_motor_control/STM32CubeIDE/pmsm/pmsm.h \
  ../../Drivers/STM32G4xx_HAL_Driver/Inc/stm32g4xx_ll_tim.h
 ../../Inc/main.h:
 ../../Drivers/STM32G4xx_HAL_Driver/Inc/stm32g4xx_hal.h:
@@ -65,4 +66,5 @@ Application/User/main.o: \
 ../../Inc/main.h:
 ../../Inc/usart.h:
 ../../Inc/gpio.h:
+C:/Users/t.shypytiak/work/projects/stm32/pmsm_motor_control/STM32CubeIDE/pmsm/pmsm.h:
 ../../Drivers/STM32G4xx_HAL_Driver/Inc/stm32g4xx_ll_tim.h:

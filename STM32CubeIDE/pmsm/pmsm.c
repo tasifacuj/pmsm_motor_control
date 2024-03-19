@@ -254,6 +254,7 @@ static const uint8_t PMSM_STATE_TABLE_INDEX_FORWARD[8] = { 0, 160, 32, 0, 96, 12
 static const uint8_t PMSM_STATE_TABLE_INDEX_BACKWARD[8] = { 0, 32, 160, 0, 96, 64, 128, 0 };
 
 volatile uint8_t	PMSM_Sensors = 0;
+volatile uint8_t	PMSM_Sensors_prev = 0;
 volatile uint16_t PMSM_Speed_prev = 0;
 volatile uint16_t PMSM_Speed = 0;
 volatile uint8_t PMSM_ModeEnabled = 0;
@@ -264,7 +265,7 @@ volatile uint8_t PMSM_MotorSpin = PMSM_CW;
 
 // Timing (points in sine table)
 // sine table contains 192 items; 360/192 = 1.875 degrees per item
-volatile static int8_t PMSM_Timing = 10; // 15 * 1.875 = 28.125 degrees
+volatile static int8_t PMSM_Timing = 5; // 15 * 1.875 = 28.125 degrees
 
 #define TIMxCCER_MASK_CH123       (LL_TIM_CHANNEL_CH1 | LL_TIM_CHANNEL_CH2 | LL_TIM_CHANNEL_CH3 )
 #define TIMxCCER_MASK_CH1N2N3N    (LL_TIM_CHANNEL_CH1N | LL_TIM_CHANNEL_CH2N | LL_TIM_CHANNEL_CH3N)
@@ -326,30 +327,40 @@ void pmsm_init(){
 
 
 void pmsm_EXTI9_5_IRQHandler(void){
-  if ( ( __HAL_GPIO_EXTI_GET_IT(HALL_H1_Pin) | __HAL_GPIO_EXTI_GET_IT(HALL_H2_Pin) | __HAL_GPIO_EXTI_GET_IT(HALL_H3_Pin) ) != 0x00u)
-    {
+  if ( ( __HAL_GPIO_EXTI_GET_IT(HALL_H1_Pin) | __HAL_GPIO_EXTI_GET_IT(HALL_H2_Pin) | __HAL_GPIO_EXTI_GET_IT(HALL_H3_Pin) ) != 0x00u){
       __HAL_GPIO_EXTI_CLEAR_IT(HALL_H1_Pin);
       __HAL_GPIO_EXTI_CLEAR_IT(HALL_H2_Pin);
       __HAL_GPIO_EXTI_CLEAR_IT(HALL_H3_Pin);
 
       PMSM_Sensors = pmsm_hall_sensors_get_position();
-      PMSM_Speed_prev = PMSM_Speed;
-      // Get rotation time (in inverse ratio speed) from timer TIM3
-      PMSM_Speed = LL_TIM_GetCounter( TIM3 );
-//      LL_TIM_EnableCounter( TIM3 );
-      LL_TIM_SetCounter( TIM3, 0 );
-      HAL_TIM_Base_Start_IT( &htim3 );
 
-      // It requires at least two measurement to correct calculate the rotor speed
-      if( PMSM_MotorSpeedIsOK() ){
-    	  LL_TIM_SetCounter( TIM4, 0 );
-    	  uint16_t arr4 = PMSM_Speed / 32;//32 - number of items in the sine table between commutations (192/6 = 32)
-    	  LL_TIM_SetAutoReload( TIM4, arr4 );
-//    	  LL_TIM_EnableCounter( TIM4 );
-    	  HAL_TIM_Base_Start_IT( &htim4 );
+//      if( PMSM_Sensors_prev == PMSM_Sensors ){
+//    	  return;
+//      }
+
+      PMSM_Sensors_prev = PMSM_Sensors;
+      //if( PMSM_Sensors == 1 )
+      {
+    	  PMSM_Speed_prev = PMSM_Speed;
+			// Get rotation time (in inverse ratio speed) from timer TIM3
+			PMSM_Speed = LL_TIM_GetCounter( TIM3 );
+			LL_TIM_EnableIT_UPDATE( TIM3 );
+			LL_TIM_SetCounter( TIM3, 0 );
+			LL_TIM_EnableCounter(TIM3);
+			//      HAL_TIM_Base_Start_IT( &htim3 );
+
+			// It requires at least two measurement to correct calculate the rotor speed
+			if( PMSM_MotorSpeedIsOK() ){
+			  LL_TIM_SetCounter( TIM4, 0 );
+			  uint16_t arr4 = PMSM_Speed / 32;//32 - number of items in the sine table between commutations (192/6 = 32)
+			  LL_TIM_SetAutoReload( TIM4, arr4 );
+			//    	  HAL_TIM_Base_Start_IT( &htim4 );
+			  LL_TIM_EnableIT_UPDATE( TIM4 );
+			  LL_TIM_EnableCounter(TIM4);
+			}
       }
 
-      if ((PMSM_Sensors > 0 ) & (PMSM_Sensors < 7)) {
+      if ( (PMSM_Sensors > 0 ) && (PMSM_Sensors < 7)) {
 			// Do a phase correction
 			PMSM_SinTableIndex = PMSM_GetState(PMSM_Sensors);
       }
@@ -358,11 +369,7 @@ void pmsm_EXTI9_5_IRQHandler(void){
     	  pmsm_motor_commutation( PMSM_Sensors );
       }
     }
-
-  /* USER CODE END EXTI9_5_IRQn 1 */
 }
-
-uint16_t sPWM1, sPWM2, sPWM3;
 
 void pmsm_sin_table_timer4_handler(){
 	uint16_t PWM1, PWM2, PWM3;
@@ -401,9 +408,6 @@ void pmsm_sin_table_timer4_handler(){
 		PMSM_SinTableIndex = 0;
 	}
 
-	sPWM1 = PWM1;
-	sPWM2 = PWM2;
-	sPWM3 = PWM3;
 }
 
 void pmsm_timer3_update_handler(){
@@ -427,7 +431,7 @@ void pmsm_motor_stop(){
 
 uint8_t pmsm_hall_sensors_get_position(){
 	uint8_t hallpos = ((GPIOB->IDR & 0b111000000) >> 6);
-//	printf(">> st:%u\r\n", hallpos);
+	printf(">> st:%u\r\n", hallpos);
 	return hallpos;
 }
 

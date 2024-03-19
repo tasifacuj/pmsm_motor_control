@@ -116,6 +116,7 @@ void MX_TIM1_Init(void)
 
 }
 /* TIM3 init function */
+// Initialize TIM3. It used to calculate the speed
 void MX_TIM3_Init(void)
 {
 
@@ -156,6 +157,7 @@ void MX_TIM3_Init(void)
 
 }
 /* TIM4 init function */
+// Initialize TIM4 which generate 3-phase sine signal
 void MX_TIM4_Init(void)
 {
 
