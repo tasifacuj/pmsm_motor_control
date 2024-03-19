@@ -30,7 +30,8 @@ pmsm/pmsm.o: ../pmsm/pmsm.c ../pmsm/pmsm.h \
  ../../Drivers/STM32G4xx_HAL_Driver/Inc/stm32g4xx_hal_uart.h \
  ../../Drivers/STM32G4xx_HAL_Driver/Inc/stm32g4xx_hal_uart_ex.h \
  ../../Inc/main.h \
- ../../Drivers/STM32G4xx_HAL_Driver/Inc/stm32g4xx_ll_gpio.h
+ ../../Drivers/STM32G4xx_HAL_Driver/Inc/stm32g4xx_ll_gpio.h \
+ ../../Inc/tim.h ../../Inc/main.h
 ../pmsm/pmsm.h:
 ../../Drivers/STM32G4xx_HAL_Driver/Inc/stm32g4xx_ll_tim.h:
 ../../Drivers/CMSIS/Device/ST/STM32G4xx/Include/stm32g4xx.h:
@@ -64,3 +65,5 @@ pmsm/pmsm.o: ../pmsm/pmsm.c ../pmsm/pmsm.h \
 ../../Drivers/STM32G4xx_HAL_Driver/Inc/stm32g4xx_hal_uart_ex.h:
 ../../Inc/main.h:
 ../../Drivers/STM32G4xx_HAL_Driver/Inc/stm32g4xx_ll_gpio.h:
+../../Inc/tim.h:
+../../Inc/main.h:

@@ -99,7 +99,6 @@ int main(void)
 
   pmsm_motor_commutation( pmsm_hall_sensors_get_position() );
   pmsm_motor_set_run();
-  pmsm_set_PWM( 4000 );
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -109,6 +108,7 @@ int main(void)
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
+	  pmsm_set_PWM( 4000 );
   }
   /* USER CODE END 3 */
 }

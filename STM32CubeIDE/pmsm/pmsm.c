@@ -13,6 +13,7 @@
 #include <stm32g4xx_ll_tim.h>
 #include <string.h>
 #include <stdio.h>
+#include "tim.h"
 
 static const uint8_t BLDC_BRIDGE_STATE_FORWARD[8][6] =   // Motor steps
 {
@@ -249,31 +250,78 @@ static const uint8_t PMSM_SINTABLE [ PMSM_SINTABLESIZE ][ 3 ] =
 		{0,       8,      225}
 };
 
+static const uint8_t PMSM_STATE_TABLE_INDEX_FORWARD[8] = { 0, 160, 32, 0, 96, 128, 64, 0 };
+static const uint8_t PMSM_STATE_TABLE_INDEX_BACKWARD[8] = { 0, 32, 160, 0, 96, 64, 128, 0 };
+
 volatile uint8_t	PMSM_Sensors = 0;
 volatile uint16_t PMSM_Speed_prev = 0;
+volatile uint16_t PMSM_Speed = 0;
 volatile uint8_t PMSM_ModeEnabled = 0;
 volatile uint8_t PMSM_MotorRunFlag = 0;
 volatile uint16_t PMSM_PWM = 0;
+volatile uint8_t PMSM_SinTableIndex = 0;
+volatile uint8_t PMSM_MotorSpin = PMSM_CW;
+
+// Timing (points in sine table)
+// sine table contains 192 items; 360/192 = 1.875 degrees per item
+volatile static int8_t PMSM_Timing = 10; // 15 * 1.875 = 28.125 degrees
 
 #define TIMxCCER_MASK_CH123       (LL_TIM_CHANNEL_CH1 | LL_TIM_CHANNEL_CH2 | LL_TIM_CHANNEL_CH3 )
 #define TIMxCCER_MASK_CH1N2N3N    (LL_TIM_CHANNEL_CH1N | LL_TIM_CHANNEL_CH2N | LL_TIM_CHANNEL_CH3N)
 
+static uint8_t PMSM_MotorSpeedIsOK(void) {
+	return ((PMSM_Speed_prev > 0) & (PMSM_Speed > 0));
+}
+
+// Get index in sine table based on the sensor data, the timing and the direction of rotor rotation
+static uint8_t	PMSM_GetState( uint8_t hallPos ){
+	int16_t index;
+
+	if( PMSM_MotorSpin == PMSM_CW ){
+		index = PMSM_STATE_TABLE_INDEX_FORWARD[ hallPos ];
+	}else{
+		index = PMSM_STATE_TABLE_INDEX_BACKWARD[ hallPos ];
+	}
+
+	index = index + ( int16_t )PMSM_Timing;
+
+	if( index > PMSM_SINTABLESIZE - 1 ){
+		index = index - PMSM_SINTABLESIZE;
+	}else{
+		if( index < 0 ){
+			index = index + PMSM_SINTABLESIZE;
+		}
+	}
+
+	return index;
+}
+
+void PMSM_SetPWM_UVW(uint16_t PWM1, uint16_t PWM2, uint16_t PWM3){
+	if (PMSM_ModeEnabled == 1) {
+		TIM1->CCR1 = PWM1;
+		TIM1->CCR2 = PWM2;
+		TIM1->CCR3 = PWM3;
+	}
+}
+
+
 void pmsm_init(){
 	//1. hall sensor initialized in MX_GPIO_Init
-	//2. pwm timer done in MX_TIM4_Init
-	//3.
+	//2. pwm timer initialized in MX_TIM4_Init
+	//3. PMSM_SinTimerInit in MX_TIM4_Init
+	//4. PMSM_SpeedTimerInit in MX_TIM3_Init
+	//5. initalize pwm channels.
 	LL_TIM_OC_SetMode( TIM1, LL_TIM_CHANNEL_CH1, LL_TIM_OCMODE_PWM1 );
 	LL_TIM_OC_SetMode( TIM1, LL_TIM_CHANNEL_CH2, LL_TIM_OCMODE_PWM1 );
 	LL_TIM_OC_SetMode( TIM1, LL_TIM_CHANNEL_CH3, LL_TIM_OCMODE_PWM1 );
-	//4. PMSM_SinTimerInit in MX_TIM4_Init
-	//5. PMSM_SpeedTimerInit in MX_TIM3_Init
 	LL_TIM_EnableCounter( TIM1 );
 	LL_TIM_CC_EnableChannel( TIM1, TIMxCCER_MASK_CH123 | TIMxCCER_MASK_CH1N2N3N );
+	// charge capacitors
 	LL_TIM_OC_SetCompareCH1(TIM1, 0u);
 	LL_TIM_OC_SetCompareCH2(TIM1, 0u);
 	LL_TIM_OC_SetCompareCH3(TIM1, 0u);
 	LL_TIM_EnableAllOutputs(TIM1);
-	pmsm_motor_stop();
+//	pmsm_motor_stop();
 }
 
 
@@ -285,7 +333,26 @@ void pmsm_EXTI9_5_IRQHandler(void){
       __HAL_GPIO_EXTI_CLEAR_IT(HALL_H3_Pin);
 
       PMSM_Sensors = pmsm_hall_sensors_get_position();
-//      PMSM_Speed_prev = PMSM_Speed;
+      PMSM_Speed_prev = PMSM_Speed;
+      // Get rotation time (in inverse ratio speed) from timer TIM3
+      PMSM_Speed = LL_TIM_GetCounter( TIM3 );
+//      LL_TIM_EnableCounter( TIM3 );
+      LL_TIM_SetCounter( TIM3, 0 );
+      HAL_TIM_Base_Start_IT( &htim3 );
+
+      // It requires at least two measurement to correct calculate the rotor speed
+      if( PMSM_MotorSpeedIsOK() ){
+    	  LL_TIM_SetCounter( TIM4, 0 );
+    	  uint16_t arr4 = PMSM_Speed / 32;//32 - number of items in the sine table between commutations (192/6 = 32)
+    	  LL_TIM_SetAutoReload( TIM4, arr4 );
+//    	  LL_TIM_EnableCounter( TIM4 );
+    	  HAL_TIM_Base_Start_IT( &htim4 );
+      }
+
+      if ((PMSM_Sensors > 0 ) & (PMSM_Sensors < 7)) {
+			// Do a phase correction
+			PMSM_SinTableIndex = PMSM_GetState(PMSM_Sensors);
+      }
 
       if ( PMSM_ModeEnabled == 0 ) {
     	  pmsm_motor_commutation( PMSM_Sensors );
@@ -295,16 +362,67 @@ void pmsm_EXTI9_5_IRQHandler(void){
   /* USER CODE END EXTI9_5_IRQn 1 */
 }
 
-void pmsm_sin_table_timer4_handler(){
+uint16_t sPWM1, sPWM2, sPWM3;
 
+void pmsm_sin_table_timer4_handler(){
+	uint16_t PWM1, PWM2, PWM3;
+
+	if ( PMSM_ModeEnabled == 0 ) {
+		// Turn PWM outputs for working with sine wave
+		LL_TIM_OC_SetMode(TIM1, LL_TIM_CHANNEL_CH1, LL_TIM_OCMODE_PWM1 );
+		LL_TIM_CC_EnableChannel(TIM1, LL_TIM_CHANNEL_CH1 | LL_TIM_CHANNEL_CH1N );
+
+		LL_TIM_OC_SetMode(TIM1, LL_TIM_CHANNEL_CH2, LL_TIM_OCMODE_PWM1 );
+		LL_TIM_CC_EnableChannel(TIM1, LL_TIM_CHANNEL_CH2 | LL_TIM_CHANNEL_CH2N );
+
+		LL_TIM_OC_SetMode(TIM1, LL_TIM_CHANNEL_CH3, LL_TIM_OCMODE_PWM1 );
+		LL_TIM_CC_EnableChannel(TIM1, LL_TIM_CHANNEL_CH3 | LL_TIM_CHANNEL_CH3N );
+
+		PMSM_ModeEnabled = 1;
+	}
+
+	PWM1 = (uint16_t)( (uint32_t)PMSM_PWM * PMSM_SINTABLE[ PMSM_SinTableIndex ][ 0 ] / 255 );
+	PWM2 = (uint16_t)( (uint32_t)PMSM_PWM * PMSM_SINTABLE[ PMSM_SinTableIndex ][ 1 ] / 255 );
+	PWM3 = (uint16_t)( (uint32_t)PMSM_PWM * PMSM_SINTABLE[ PMSM_SinTableIndex ][ 2 ] / 255 );
+
+	if (PMSM_MotorSpin == PMSM_CW) {
+		// Forward rotation
+		PMSM_SetPWM_UVW(PWM1, PWM2, PWM3);
+	}
+	else {
+		// Backward rotation
+		PMSM_SetPWM_UVW(PWM1, PWM3, PWM2);
+	}
+
+	// Increment position in sine table
+	PMSM_SinTableIndex++;
+
+	if (PMSM_SinTableIndex > PMSM_SINTABLESIZE-1) {
+		PMSM_SinTableIndex = 0;
+	}
+
+	sPWM1 = PWM1;
+	sPWM2 = PWM2;
+	sPWM3 = PWM3;
 }
 
 void pmsm_timer3_update_handler(){
-
+	// Overflow - the motor is stopped
+	if (PMSM_MotorSpeedIsOK()) {
+		pmsm_motor_stop();
+	}
 }
 
 void pmsm_motor_stop(){
+	pmsm_set_PWM( 0 );
+	LL_TIM_CC_EnableChannel( TIM1, TIMxCCER_MASK_CH123 | TIMxCCER_MASK_CH1N2N3N );
 
+	LL_TIM_DisableCounter( TIM3 );
+	LL_TIM_DisableCounter( TIM4 );
+	PMSM_Speed = 0;
+	PMSM_Speed_prev = 0;
+	PMSM_MotorRunFlag = 0;
+	PMSM_ModeEnabled = 0;
 }
 
 uint8_t pmsm_hall_sensors_get_position(){
@@ -314,7 +432,12 @@ uint8_t pmsm_hall_sensors_get_position(){
 }
 
 void pmsm_motor_commutation( uint16_t hall_pos ){
-	memcpy( PMSM_State, BLDC_BRIDGE_STATE_FORWARD[ hall_pos ], sizeof( PMSM_State ) );
+	if (PMSM_MotorSpin == PMSM_CW) {
+		memcpy(PMSM_State, BLDC_BRIDGE_STATE_FORWARD[hall_pos], sizeof(PMSM_State));
+	}
+	else {
+		memcpy(PMSM_State, PMSM_BRIDGE_STATE_BACKWARD[hall_pos], sizeof(PMSM_State));
+	}
 
 	if (PMSM_State[UH]) {
 		LL_TIM_OC_SetMode(TIM1, LL_TIM_CHANNEL_CH1, LL_TIM_OCMODE_PWM1 );
@@ -373,12 +496,15 @@ void pmsm_motor_set_run(void){
 }
 
 void pmsm_set_PWM(uint16_t PWM){
-	if (PMSM_ModeEnabled == 0) {
+	if ( PMSM_ModeEnabled == 0 ) {
 		TIM1->CCR1 = PWM;
 		TIM1->CCR2 = PWM;
 		TIM1->CCR3 = PWM;
-	}
-	else {
+	} else {
 		PMSM_PWM = PWM;
 	}
+}
+
+void PMSM_MotorSetSpin(uint8_t spin) {
+	PMSM_MotorSpin = spin;
 }
