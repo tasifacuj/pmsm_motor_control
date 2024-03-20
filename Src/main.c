@@ -111,7 +111,7 @@ int main(void)
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
-	  pmsm_set_PWM( 2200 );
+	  pmsm_set_PWM( 5000 );
   }
   /* USER CODE END 3 */
 }

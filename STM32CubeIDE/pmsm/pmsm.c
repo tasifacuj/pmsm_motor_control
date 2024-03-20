@@ -57,6 +57,7 @@ uint8_t PMSM_State[6] = {0, 0, 0, 0, 0, 0};
 #define PMSM_SINTABLESIZE	192
 static const uint8_t PMSM_SINTABLE [ PMSM_SINTABLESIZE ][ 3 ] =
 {
+		// 1
 		{0,       0,      221},
 		{8,       0,      225},
 		{17,      0,      229},
@@ -90,6 +91,7 @@ static const uint8_t PMSM_SINTABLE [ PMSM_SINTABLESIZE ][ 3 ] =
 		{212,     0,      229},
 		{217,     0,      225},
 		{221,     0,      221},
+	// 2
 		{225,     0,      217},
 		{229,     0,      212},
 		{232,     0,      207},
@@ -122,6 +124,7 @@ static const uint8_t PMSM_SINTABLE [ PMSM_SINTABLESIZE ][ 3 ] =
 		{229,     0,      17},
 		{225,     0,      8},
 		{221,     0,      0},
+		// 3
 		{225,     8,      0},
 		{229,     17,     0},
 		{232,     25,     0},
@@ -155,6 +158,7 @@ static const uint8_t PMSM_SINTABLE [ PMSM_SINTABLESIZE ][ 3 ] =
 		{225,     217,    0},
 		{221,     221,    0},
 		{217,     225,    0},
+		// 4
 		{212,     229,    0},
 		{207,     232,    0},
 		{202,     236,    0},
@@ -187,6 +191,7 @@ static const uint8_t PMSM_SINTABLE [ PMSM_SINTABLESIZE ][ 3 ] =
 		{8,       225,    0},
 		{0,       221,    0},
 		{0,       225,    8},
+		//5
 		{0,       229,    17},
 		{0,       232,    25},
 		{0,       236,    33},
@@ -219,6 +224,7 @@ static const uint8_t PMSM_SINTABLE [ PMSM_SINTABLESIZE ][ 3 ] =
 		{0,       225,    217},
 		{0,       221,    221},
 		{0,       217,    225},
+		// 6
 		{0,       212,    229},
 		{0,       207,    232},
 		{0,       202,    236},
@@ -251,8 +257,26 @@ static const uint8_t PMSM_SINTABLE [ PMSM_SINTABLESIZE ][ 3 ] =
 		{0,       8,      225}
 };
 
-static const uint8_t PMSM_STATE_TABLE_INDEX_FORWARD[8] = { 0, 160, 32, 0, 96, 128, 64, 0 };
-static const uint8_t PMSM_STATE_TABLE_INDEX_BACKWARD[8] = { 0, 32, 160, 0, 96, 64, 128, 0 };
+static const uint8_t PMSM_STATE_TABLE_INDEX_FORWARD[8] = {
+		0,//1
+		160,//160/32 == 5(6)
+		32,//32 / 32 == 1(2)
+		0,//0(1)
+		96,//96/32 == 3(4)
+		128,//128/32 == 4(5)
+		64,//64 / 23 == 2(3)
+		0//1
+};
+static const uint8_t PMSM_STATE_TABLE_INDEX_BACKWARD[8] = {
+		0,
+		32,//1
+		160,//5
+		0,
+		96,//3
+		64,//2
+		128,//4
+		0
+};
 
 volatile uint8_t	PMSM_Sensors = 0;
 volatile uint8_t	PMSM_Sensors_prev = 0;
@@ -266,7 +290,7 @@ volatile uint8_t PMSM_MotorSpin = PMSM_CW;
 
 // Timing (points in sine table)
 // sine table contains 192 items; 360/192 = 1.875 degrees per item
-volatile static int8_t PMSM_Timing = 10; // 15 * 1.875 = 28.125 degrees
+volatile static int8_t PMSM_Timing = 15; // 15 * 1.875 = 28.125 degrees
 
 #define TIMxCCER_MASK_CH123       (LL_TIM_CHANNEL_CH1 | LL_TIM_CHANNEL_CH2 | LL_TIM_CHANNEL_CH3 )
 #define TIMxCCER_MASK_CH1N2N3N    (LL_TIM_CHANNEL_CH1N | LL_TIM_CHANNEL_CH2N | LL_TIM_CHANNEL_CH3N)
@@ -347,13 +371,13 @@ void pmsm_EXTI9_5_IRQHandler(void){
 			  LL_TIM_SetAutoReload( TIM4, arr4 );
 			//    	  HAL_TIM_Base_Start_IT( &htim4 );
 			  LL_TIM_EnableIT_UPDATE( TIM4 );
-			  LL_TIM_EnableCounter(TIM4);
+			  LL_TIM_EnableCounter( TIM4 );
 			}
       }
 
       if ( (PMSM_Sensors > 0 ) && (PMSM_Sensors < 7)) {
 			// Do a phase correction
-			PMSM_SinTableIndex = PMSM_GetState(PMSM_Sensors);
+			PMSM_SinTableIndex = PMSM_GetState( PMSM_Sensors );
       }
 
       if ( PMSM_ModeEnabled == 0 ) {
@@ -393,7 +417,7 @@ void pmsm_sin_table_timer4_handler(){
 	}
 
 	// Increment position in sine table
-	PMSM_SinTableIndex++;
+	PMSM_SinTableIndex ++;
 
 	if (PMSM_SinTableIndex > PMSM_SINTABLESIZE-1) {
 		PMSM_SinTableIndex = 0;
