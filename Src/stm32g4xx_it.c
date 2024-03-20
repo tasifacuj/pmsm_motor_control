@@ -215,7 +215,12 @@ void EXTI9_5_IRQHandler(void)
   HAL_GPIO_EXTI_IRQHandler(HALL_H3_Pin);
   /* USER CODE BEGIN EXTI9_5_IRQn 1 */
 #else
-  pmsm_EXTI9_5_IRQHandler();
+  if ( ( __HAL_GPIO_EXTI_GET_IT(HALL_H1_Pin) | __HAL_GPIO_EXTI_GET_IT(HALL_H2_Pin) | __HAL_GPIO_EXTI_GET_IT(HALL_H3_Pin) ) != 0x00u){
+        __HAL_GPIO_EXTI_CLEAR_IT(HALL_H1_Pin);
+        __HAL_GPIO_EXTI_CLEAR_IT(HALL_H2_Pin);
+        __HAL_GPIO_EXTI_CLEAR_IT(HALL_H3_Pin);
+        pmsm_EXTI9_5_IRQHandler();
+  }
 #endif
   /* USER CODE END EXTI9_5_IRQn 1 */
 }

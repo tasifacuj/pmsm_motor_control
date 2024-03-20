@@ -15,21 +15,21 @@
 #include <stdio.h>
 #include "tim.h"
 
-static const uint8_t BLDC_BRIDGE_STATE_FORWARD[8][6] =   // Motor steps
+// Forward Motor steps
+static const uint8_t PMSM_BRIDGE_STATE_FORWARD[8][6] =
 {
 //	UH,UL		VH,VL	WH,WL
-   { 0,0	,	0,0	,	0,0 },  // 0 //000
-
-   { 0,1	,	0,0	,	1,0 },
-   { 1,0	,	0,1	,	0,0 },
-   { 0,0	,	0,1	,	1,0 },
-   { 0,0	,	1,0	,	0,1 },
-   { 0,1	,	1,0	,	0,0 },
-   { 1,0	,	0,0	,	0,1 },
-
-   { 0,0	,	0,0	,	0,0 },  // 0 //111
+   { 0,0,		0,0,	0,0 },  // 0 //000
+   { 0,1,		0,0,	1,0 },
+   { 1,0,		0,1,	0,0 },
+   { 0,0,		0,1,	1,0 },
+   { 0,0,		1,0,	0,1 },
+   { 0,1,		1,0,	0,0 },
+   { 1,0,		0,0,	0,1 },
+   { 0,0,		0,0,	0,0 },  // 0 //111
 };
 
+// Backward Motor steps
 static const uint8_t PMSM_BRIDGE_STATE_BACKWARD[8][6] =
 {
 //	UH,UL		VH,VL	WH,WL
@@ -42,6 +42,7 @@ static const uint8_t PMSM_BRIDGE_STATE_BACKWARD[8][6] =
    { 0,1,		0,0,	1,0 },
    { 0,0,		0,0,	0,0 },  //  //111
 };
+
 
 uint8_t PMSM_State[6] = {0, 0, 0, 0, 0, 0};
 
@@ -265,7 +266,7 @@ volatile uint8_t PMSM_MotorSpin = PMSM_CW;
 
 // Timing (points in sine table)
 // sine table contains 192 items; 360/192 = 1.875 degrees per item
-volatile static int8_t PMSM_Timing = 5; // 15 * 1.875 = 28.125 degrees
+volatile static int8_t PMSM_Timing = 10; // 15 * 1.875 = 28.125 degrees
 
 #define TIMxCCER_MASK_CH123       (LL_TIM_CHANNEL_CH1 | LL_TIM_CHANNEL_CH2 | LL_TIM_CHANNEL_CH3 )
 #define TIMxCCER_MASK_CH1N2N3N    (LL_TIM_CHANNEL_CH1N | LL_TIM_CHANNEL_CH2N | LL_TIM_CHANNEL_CH3N)
@@ -327,20 +328,10 @@ void pmsm_init(){
 
 
 void pmsm_EXTI9_5_IRQHandler(void){
-  if ( ( __HAL_GPIO_EXTI_GET_IT(HALL_H1_Pin) | __HAL_GPIO_EXTI_GET_IT(HALL_H2_Pin) | __HAL_GPIO_EXTI_GET_IT(HALL_H3_Pin) ) != 0x00u){
-      __HAL_GPIO_EXTI_CLEAR_IT(HALL_H1_Pin);
-      __HAL_GPIO_EXTI_CLEAR_IT(HALL_H2_Pin);
-      __HAL_GPIO_EXTI_CLEAR_IT(HALL_H3_Pin);
-
+  {
       PMSM_Sensors = pmsm_hall_sensors_get_position();
-
-//      if( PMSM_Sensors_prev == PMSM_Sensors ){
-//    	  return;
-//      }
-
-      PMSM_Sensors_prev = PMSM_Sensors;
-      //if( PMSM_Sensors == 1 )
       {
+    	  PMSM_Sensors_prev = PMSM_Sensors;
     	  PMSM_Speed_prev = PMSM_Speed;
 			// Get rotation time (in inverse ratio speed) from timer TIM3
 			PMSM_Speed = LL_TIM_GetCounter( TIM3 );
@@ -372,7 +363,7 @@ void pmsm_EXTI9_5_IRQHandler(void){
 }
 
 void pmsm_sin_table_timer4_handler(){
-	uint16_t PWM1, PWM2, PWM3;
+	uint16_t uPWM, vPWM, wPWM;
 
 	if ( PMSM_ModeEnabled == 0 ) {
 		// Turn PWM outputs for working with sine wave
@@ -388,17 +379,17 @@ void pmsm_sin_table_timer4_handler(){
 		PMSM_ModeEnabled = 1;
 	}
 
-	PWM1 = (uint16_t)( (uint32_t)PMSM_PWM * PMSM_SINTABLE[ PMSM_SinTableIndex ][ 0 ] / 255 );
-	PWM2 = (uint16_t)( (uint32_t)PMSM_PWM * PMSM_SINTABLE[ PMSM_SinTableIndex ][ 1 ] / 255 );
-	PWM3 = (uint16_t)( (uint32_t)PMSM_PWM * PMSM_SINTABLE[ PMSM_SinTableIndex ][ 2 ] / 255 );
+	uPWM = (uint16_t)( (uint32_t)PMSM_PWM * PMSM_SINTABLE[ PMSM_SinTableIndex ][ 0 ] / 255 );
+	vPWM = (uint16_t)( (uint32_t)PMSM_PWM * PMSM_SINTABLE[ PMSM_SinTableIndex ][ 1 ] / 255 );
+	wPWM = (uint16_t)( (uint32_t)PMSM_PWM * PMSM_SINTABLE[ PMSM_SinTableIndex ][ 2 ] / 255 );
 
 	if (PMSM_MotorSpin == PMSM_CW) {
 		// Forward rotation
-		PMSM_SetPWM_UVW(PWM1, PWM2, PWM3);
+		PMSM_SetPWM_UVW(uPWM, vPWM, wPWM);
 	}
 	else {
 		// Backward rotation
-		PMSM_SetPWM_UVW(PWM1, PWM3, PWM2);
+		PMSM_SetPWM_UVW(uPWM, wPWM, vPWM);
 	}
 
 	// Increment position in sine table
@@ -418,6 +409,7 @@ void pmsm_timer3_update_handler(){
 }
 
 void pmsm_motor_stop(){
+	printf( "pmsm_motor_stop\r\n" );
 	pmsm_set_PWM( 0 );
 	LL_TIM_CC_EnableChannel( TIM1, TIMxCCER_MASK_CH123 | TIMxCCER_MASK_CH1N2N3N );
 
@@ -437,7 +429,7 @@ uint8_t pmsm_hall_sensors_get_position(){
 
 void pmsm_motor_commutation( uint16_t hall_pos ){
 	if (PMSM_MotorSpin == PMSM_CW) {
-		memcpy(PMSM_State, BLDC_BRIDGE_STATE_FORWARD[hall_pos], sizeof(PMSM_State));
+		memcpy(PMSM_State, PMSM_BRIDGE_STATE_FORWARD[hall_pos], sizeof(PMSM_State));
 	}
 	else {
 		memcpy(PMSM_State, PMSM_BRIDGE_STATE_BACKWARD[hall_pos], sizeof(PMSM_State));

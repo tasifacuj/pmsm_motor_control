@@ -1,8 +1,0 @@
-../../Drivers/STM32G4xx_HAL_Driver/Inc/stm32g4xx_ll_tim.h:2023:22:LL_TIM_EnableCounter	1
-../../Drivers/STM32G4xx_HAL_Driver/Inc/stm32g4xx_ll_tim.h:4623:22:LL_TIM_EnableAllOutputs	1
-C:/Users/t.shypytiak/work/projects/stm32/pmsm_motor_control/Src/tim.c:32:6:MX_TIM1_Init	9
-C:/Users/t.shypytiak/work/projects/stm32/pmsm_motor_control/Src/tim.c:120:6:MX_TIM3_Init	4
-C:/Users/t.shypytiak/work/projects/stm32/pmsm_motor_control/Src/tim.c:161:6:MX_TIM4_Init	4
-C:/Users/t.shypytiak/work/projects/stm32/pmsm_motor_control/Src/tim.c:201:6:HAL_TIM_Base_MspInit	4
-C:/Users/t.shypytiak/work/projects/stm32/pmsm_motor_control/Src/tim.c:252:6:HAL_TIM_MspPostInit	2
-C:/Users/t.shypytiak/work/projects/stm32/pmsm_motor_control/Src/tim.c:286:6:HAL_TIM_Base_MspDeInit	4

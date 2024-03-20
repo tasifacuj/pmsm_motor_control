@@ -99,6 +99,7 @@ int main(void)
   PMSM_MotorSetSpin( PMSM_CCW );
   HAL_Delay( 3000 );
 
+  printf( ">> Started\r\n" );
   pmsm_motor_commutation( pmsm_hall_sensors_get_position() );
   pmsm_motor_set_run();
   /* USER CODE END 2 */
@@ -110,7 +111,7 @@ int main(void)
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
-	  pmsm_set_PWM( 3000 );
+	  pmsm_set_PWM( 2200 );
   }
   /* USER CODE END 3 */
 }
