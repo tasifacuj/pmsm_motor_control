@@ -257,6 +257,7 @@ static const uint8_t PMSM_SINTABLE [ PMSM_SINTABLESIZE ][ 3 ] =
 		{0,       8,      225}
 };
 
+#if 0
 static const uint8_t PMSM_STATE_TABLE_INDEX_FORWARD[8] = {
 		0,//1
 		160,//160/32 == 5(6)
@@ -267,6 +268,7 @@ static const uint8_t PMSM_STATE_TABLE_INDEX_FORWARD[8] = {
 		64,//64 / 23 == 2(3)
 		0//1
 };
+
 static const uint8_t PMSM_STATE_TABLE_INDEX_BACKWARD[8] = {
 		0,
 		32,//1
@@ -277,6 +279,31 @@ static const uint8_t PMSM_STATE_TABLE_INDEX_BACKWARD[8] = {
 		128,//4
 		0
 };
+#else
+static const uint8_t PMSM_STATE_TABLE_INDEX_FORWARD[8] = {
+		0,//1
+		160,//160/32 == 5(6)
+		96,//96/32 == 3(4)
+		128,//128/32 == 4(5)
+		0,//0(1)
+		64,//64 / 23 == 2(3)
+		32,//32 / 32 == 1(2)
+		0//1
+};
+
+static const uint8_t PMSM_STATE_TABLE_INDEX_BACKWARD[8] = {
+		0,
+		32,//1
+		160,//5
+		0,
+		96,//3
+		64,//2
+		128,//4
+		0
+};
+#endif
+
+
 
 volatile uint8_t	PMSM_Sensors = 0;
 volatile uint8_t	PMSM_Sensors_prev = 0;
